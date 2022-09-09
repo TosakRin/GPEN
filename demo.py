@@ -15,57 +15,11 @@ from face_enhancement import FaceEnhancement
 from segmentation2face import Segmentation2Face
 from utils import get_args
 
-
-def brush_stroke_mask(img, color=(255, 255, 255)):
-    min_num_vertex = 8
-    max_num_vertex = 28
-    mean_angle = 2 * math.pi / 5
-    angle_range = 2 * math.pi / 15
-    min_width = 12
-    max_width = 80
-
-    def generate_mask(H, W, img=None):
-        average_radius = math.sqrt(H * H + W * W) / 8
-        mask = Image.new('RGB', (W, H), 0)
-        if img is not None: mask = img  # Image.fromarray(img)
-
-        for _ in range(np.random.randint(1, 4)):
-            num_vertex = np.random.randint(min_num_vertex, max_num_vertex)
-            angle_min = mean_angle - np.random.uniform(0, angle_range)
-            angle_max = mean_angle + np.random.uniform(0, angle_range)
-            angles = []
-            vertex = []
-            for i in range(num_vertex):
-                if i % 2 == 0:
-                    angles.append(2 * math.pi - np.random.uniform(angle_min, angle_max))
-                else:
-                    angles.append(np.random.uniform(angle_min, angle_max))
-
-            h, w = mask.size
-            vertex.append((int(np.random.randint(0, w)), int(np.random.randint(0, h))))
-            for i in range(num_vertex):
-                r = np.clip(
-                    np.random.normal(loc=average_radius, scale=average_radius // 2),
-                    0, 2 * average_radius)
-                new_x = np.clip(vertex[-1][0] + r * math.cos(angles[i]), 0, w)
-                new_y = np.clip(vertex[-1][1] + r * math.sin(angles[i]), 0, h)
-                vertex.append((int(new_x), int(new_y)))
-
-            draw = ImageDraw.Draw(mask)
-            width = int(np.random.uniform(min_width, max_width))
-            draw.line(vertex, fill=color, width=width)
-            for v in vertex:
-                draw.ellipse((v[0] - width // 2,
-                              v[1] - width // 2,
-                              v[0] + width // 2,
-                              v[1] + width // 2),
-                             fill=color)
-
-        return mask
-
-    width, height = img.size
-    mask = generate_mask(height, width, img)
-    return mask
+"""
+hyper-parameters:
+    --in_size: input size of GPEN
+    
+"""
 
 
 if __name__ == '__main__':
@@ -91,14 +45,15 @@ if __name__ == '__main__':
     for n, file in enumerate(files[:]):
         filename = os.path.basename(file)
 
-        img = cv2.imread(file, cv2.IMREAD_COLOR)  # BGR
-        if not isinstance(img, np.ndarray):     # not an image
+        img = cv2.imread(file, cv2.IMREAD_COLOR)  # HWC-BGR-uint8
+        if not isinstance(img, np.ndarray):     # error: not an image
             print(filename, 'error')
             continue
         # img = cv2.resize(img, (0,0), fx=2, fy=2) # optional
 
         img_out, orig_faces, enhanced_faces = processor.process(img, aligned=args.aligned)
 
+        # save results images
         img = cv2.resize(img, img_out.shape[:2][::-1])
         cv2.imwrite(os.path.join(args.outdir, '.'.join(filename.split('.')[:-1]) + f'_COMP{args.ext}'),
                     np.hstack((img, img_out)))
