@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw
 import __init_paths
 from face_enhancement import FaceEnhancement
 from segmentation2face import Segmentation2Face
+from utils import get_args
 
 
 def brush_stroke_mask(img, color=(255, 255, 255)):
@@ -68,51 +69,35 @@ def brush_stroke_mask(img, color=(255, 255, 255)):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='GPEN-BFR-512', help='GPEN model')
-    parser.add_argument('--task', type=str, default='FaceEnhancement', help='task of GPEN model')
-    parser.add_argument('--key', type=str, default=None, help='key of GPEN model')
-    parser.add_argument('--in_size', type=int, default=512, help='in resolution of GPEN')
-    parser.add_argument('--out_size', type=int, default=None, help='out resolution of GPEN')
-    parser.add_argument('--channel_multiplier', type=int, default=2, help='channel multiplier of GPEN')
-    parser.add_argument('--narrow', type=float, default=1, help='channel narrow scale')
-    parser.add_argument('--alpha', type=float, default=1, help='blending the results')
-    parser.add_argument('--use_sr', action='store_true', help='use sr or not')
-    parser.add_argument('--use_cuda', action='store_true', help='use cuda or not')
-    parser.add_argument('--save_face', action='store_true', help='save face or not')
-    parser.add_argument('--aligned', action='store_true', help='input are aligned faces or not')
-    parser.add_argument('--sr_model', type=str, default='realesrnet', help='SR model')
-    parser.add_argument('--sr_scale', type=int, default=2, help='SR scale')
-    parser.add_argument('--tile_size', type=int, default=0, help='tile size for SR to avoid OOM')
-    parser.add_argument('--indir', type=str, default='examples/imgs', help='input folder')
-    parser.add_argument('--outdir', type=str, default='results/outs-BFR', help='output folder')
-    parser.add_argument('--ext', type=str, default='.jpg', help='extension of output')
-    args = parser.parse_args()
+    # 1. get args
+    args = get_args()
 
     # model = {'name':'GPEN-BFR-512', 'size':512, 'channel_multiplier':2, 'narrow':1}
     # model = {'name':'GPEN-BFR-256', 'size':256, 'channel_multiplier':1, 'narrow':0.5}
 
+    # 2. make output directory
     os.makedirs(args.outdir, exist_ok=True)
 
+    # 3. load model
+    processor = None
     if args.task == 'FaceEnhancement':
-        processer = FaceEnhancement(args, in_size=args.in_size, model=args.model, use_sr=args.use_sr,
+        processor = FaceEnhancement(args, in_size=args.in_size, model=args.model, use_sr=args.use_sr,
                                     device='cuda' if args.use_cuda else 'cpu')
     elif args.task == 'Segmentation2Face':
-        processer = Segmentation2Face(in_size=args.in_size, model=args.model, is_norm=False,
+        processor = Segmentation2Face(in_size=args.in_size, model=args.model, is_norm=False,
                                       device='cuda' if args.use_cuda else 'cpu')
-
+    # 4. load images and process
     files = sorted(glob.glob(os.path.join(args.indir, '*.*g')))
     for n, file in enumerate(files[:]):
         filename = os.path.basename(file)
 
         img = cv2.imread(file, cv2.IMREAD_COLOR)  # BGR
-        if not isinstance(img, np.ndarray): print(filename, 'error'); continue
+        if not isinstance(img, np.ndarray):     # not an image
+            print(filename, 'error')
+            continue
         # img = cv2.resize(img, (0,0), fx=2, fy=2) # optional
 
-        if args.task == 'FaceInpainting':
-            img = np.asarray(brush_stroke_mask(Image.fromarray(img)))
-
-        img_out, orig_faces, enhanced_faces = processer.process(img, aligned=args.aligned)
+        img_out, orig_faces, enhanced_faces = processor.process(img, aligned=args.aligned)
 
         img = cv2.resize(img, img_out.shape[:2][::-1])
         cv2.imwrite(os.path.join(args.outdir, '.'.join(filename.split('.')[:-1]) + f'_COMP{args.ext}'),
