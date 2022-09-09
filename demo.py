@@ -1,16 +1,11 @@
-'''
+"""
 @paper: GAN Prior Embedded Network for Blind Face Restoration in the Wild (CVPR2021)
 @author: yangxy (yangtao9009@gmail.com)
-'''
+"""
 import os
 import cv2
 import glob
-import time
-import math
-import argparse
 import numpy as np
-from PIL import Image, ImageDraw
-import __init_paths
 from face_enhancement import FaceEnhancement
 from segmentation2face import Segmentation2Face
 from utils import get_args
@@ -65,4 +60,5 @@ if __name__ == '__main__':
                 cv2.imwrite(os.path.join(args.outdir, '.'.join(filename.split('.')[:-1]) + '_face%02d' % m + args.ext),
                             np.hstack((of, ef)))
 
-        if n % 10 == 0: print(n, filename)
+        if n % 10 == 0:
+            print(n, filename)
