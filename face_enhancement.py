@@ -1,11 +1,9 @@
-'''
+"""
 @paper: GAN Prior Embedded Network for Blind Face Restoration in the Wild (CVPR2021)
 @author: yangxy (yangtao9009@gmail.com)
-'''
+"""
 import cv2
-import time
 import numpy as np
-import __init_paths
 from face_detect.retinaface_detection import RetinaFaceDetection
 from face_parse.face_parsing import FaceParse
 from face_model.face_gan import FaceGAN
@@ -15,11 +13,11 @@ from align_faces import warp_and_crop_face, get_reference_facial_points
 
 class FaceEnhancement(object):
     def __init__(self, args, base_dir='./', in_size=512, out_size=None, model=None, use_sr=True, device='cuda'):
-        self.facedetector = RetinaFaceDetection(base_dir, device)
-        self.facegan = FaceGAN(base_dir, in_size, out_size, model, args.channel_multiplier, args.narrow, args.key,
+        self.face_detector = RetinaFaceDetection(base_dir, device)
+        self.face_gan = FaceGAN(base_dir, in_size, out_size, model, args.channel_multiplier, args.narrow, args.key,
                                device=device)
-        self.srmodel = RealESRNet(base_dir, args.sr_model, args.sr_scale, args.tile_size, device=device)
-        self.faceparser = FaceParse(base_dir, device=device)
+        self.bgsr_model = RealESRNet(base_dir, args.sr_model, args.sr_scale, args.tile_size, device=device)
+        self.face_parser = FaceParse(base_dir, device=device)
         self.use_sr = use_sr
         self.in_size = in_size
         self.out_size = in_size if out_size is None else out_size
@@ -45,9 +43,9 @@ class FaceEnhancement(object):
             (self.in_size, self.in_size), inner_padding_factor, outer_padding, default_square)
 
     def mask_postprocess(self, mask, thres=26):
-        mask[:thres, :] = 0;
+        mask[:thres, :] = 0
         mask[-thres:, :] = 0
-        mask[:, :thres] = 0;
+        mask[:, :thres] = 0
         mask[:, -thres:] = 0
         mask = cv2.GaussianBlur(mask, (101, 101), 4)
         mask = cv2.GaussianBlur(mask, (101, 101), 4)
@@ -56,21 +54,21 @@ class FaceEnhancement(object):
     def process(self, img, aligned=False):
         orig_faces, enhanced_faces = [], []
         if aligned:
-            ef = self.facegan.process(img)
+            ef = self.face_gan.process(img)
             orig_faces.append(img)
             enhanced_faces.append(ef)
 
             if self.use_sr:
-                ef = self.srmodel.process(ef)
+                ef = self.bgsr_model.process(ef)
 
             return ef, orig_faces, enhanced_faces
 
         if self.use_sr:
-            img_sr = self.srmodel.process(img)
+            img_sr = self.bgsr_model.process(img)
             if img_sr is not None:
                 img = cv2.resize(img, img_sr.shape[:2][::-1])
 
-        facebs, landms = self.facedetector.detect(img)
+        facebs, landms = self.face_detector.detect(img)
 
         height, width = img.shape[:2]
         full_mask = np.zeros((height, width), dtype=np.float32)
@@ -86,13 +84,13 @@ class FaceEnhancement(object):
                                              crop_size=(self.in_size, self.in_size))
 
             # enhance the face
-            ef = self.facegan.process(of)
+            ef = self.face_gan.process(of)
 
             orig_faces.append(of)
             enhanced_faces.append(ef)
 
             # tmp_mask = self.mask
-            tmp_mask = self.mask_postprocess(self.faceparser.process(ef)[0] / 255.)
+            tmp_mask = self.mask_postprocess(self.face_parser.process(ef)[0] / 255.)
             tmp_mask = cv2.resize(tmp_mask, (self.in_size, self.in_size))
             tmp_mask = cv2.warpAffine(tmp_mask, tfm_inv, (width, height), flags=3)
 
