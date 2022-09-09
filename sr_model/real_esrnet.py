@@ -5,6 +5,7 @@ import numpy as np
 from rrdbnet_arch import RRDBNet
 from torch.nn import functional as F
 
+
 class RealESRNet(object):
     def __init__(self, base_dir='./', model=None, scale=2, tile_size=0, tile_pad=10, device='cuda'):
         self.base_dir = base_dir
@@ -17,10 +18,10 @@ class RealESRNet(object):
     def load_srmodel(self, base_dir, model):
         self.srmodel = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=32, num_block=23, num_grow_ch=32, scale=self.scale)
         if model is None:
-            loadnet = torch.load(os.path.join(self.base_dir, 'weights', 'realesrnet_x%d.pth'%self.scale))
+            loadnet = torch.load(os.path.join(self.base_dir, 'weights', 'realesrnet_x%d.pth' % self.scale))
         else:
-            loadnet = torch.load(os.path.join(self.base_dir, 'weights', model+'_x%d.pth'%self.scale))
-        #print(loadnet['params_ema'].keys)
+            loadnet = torch.load(os.path.join(self.base_dir, 'weights', model + '_x%d.pth' % self.scale))
+        # print(loadnet['params_ema'].keys)
         self.srmodel.load_state_dict(loadnet['params_ema'], strict=True)
         self.srmodel.eval()
         self.srmodel = self.srmodel.to(self.device)
@@ -72,7 +73,7 @@ class RealESRNet(object):
                 except RuntimeError as error:
                     print('Error', error)
                     return None
-                if tile_idx%10==0: print(f'\tTile {tile_idx}/{tiles_x * tiles_y}')
+                if tile_idx % 10 == 0: print(f'\tTile {tile_idx}/{tiles_x * tiles_y}')
 
                 # output tile area on total image
                 output_start_x = input_start_x * self.scale
@@ -88,8 +89,8 @@ class RealESRNet(object):
 
                 # put tile into output image
                 output[:, :, output_start_y:output_end_y,
-                            output_start_x:output_end_x] = output_tile[:, :, output_start_y_tile:output_end_y_tile,
-                                                                       output_start_x_tile:output_end_x_tile]
+                output_start_x:output_end_x] = output_tile[:, :, output_start_y_tile:output_end_y_tile,
+                                               output_start_x_tile:output_end_x_tile]
         return output
 
     def process(self, img):

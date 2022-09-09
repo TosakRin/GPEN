@@ -12,7 +12,6 @@ from utils.nms.py_cpu_nms import py_cpu_nms
 import cv2
 from facemodels.retinaface import RetinaFace
 from utils.box_utils import decode, decode_landm
-import time
 import torch.nn.functional as F
 
 
@@ -20,13 +19,12 @@ class RetinaFaceDetection(object):
     def __init__(self, base_dir, device='cuda', network='RetinaFace-R50'):
         torch.set_grad_enabled(False)
         cudnn.benchmark = True
-        self.pretrained_path = os.path.join(base_dir, 'weights', network+'.pth')
-        self.device = device #torch.cuda.current_device()
+        self.pretrained_path = os.path.join(base_dir, 'weights', network + '.pth')
+        self.device = device  # torch.cuda.current_device()
         self.cfg = cfg_re50
         self.net = RetinaFace(cfg=self.cfg, phase='test')
         self.load_model()
         self.net = self.net.to(device)
-
         self.mean = torch.tensor([[[[104]], [[117]], [[123]]]]).to(device)
 
     def check_keys(self, pretrained_state_dict):
@@ -44,9 +42,9 @@ class RetinaFaceDetection(object):
         return {f(key): value for key, value in state_dict.items()}
 
     def load_model(self, load_to_cpu=False):
-        #if load_to_cpu:
+        # if load_to_cpu:
         #    pretrained_dict = torch.load(self.pretrained_path, map_location=lambda storage, loc: storage)
-        #else:
+        # else:
         #    pretrained_dict = torch.load(self.pretrained_path, map_location=lambda storage, loc: storage.cuda())
         pretrained_dict = torch.load(self.pretrained_path, map_location=torch.device('cpu'))
         if "state_dict" in pretrained_dict.keys():
@@ -56,16 +54,31 @@ class RetinaFaceDetection(object):
         self.check_keys(pretrained_dict)
         self.net.load_state_dict(pretrained_dict, strict=False)
         self.net.eval()
-    
-    def detect(self, img_raw, resize=1, confidence_threshold=0.9, nms_threshold=0.4, top_k=5000, keep_top_k=750, save_image=False):
+
+    def detect(self, img_raw, resize=1, confidence_threshold=0.9, nms_threshold=0.4, top_k=5000, keep_top_k=750,
+               save_image=False):
+        """
+
+        Args:
+            img_raw:
+            resize:
+            confidence_threshold:
+            nms_threshold:
+            top_k:
+            keep_top_k:
+            save_image:
+
+        Returns:
+
+        """
         img = np.float32(img_raw)
 
         im_height, im_width = img.shape[:2]
         ss = 1.0
         # tricky
         if max(im_height, im_width) > 1500:
-            ss = 1000.0/max(im_height, im_width)
-            img = cv2.resize(img, (0,0), fx=ss, fy=ss)
+            ss = 1000.0 / max(im_height, im_width)
+            img = cv2.resize(img, (0, 0), fx=ss, fy=ss)
             im_height, im_width = img.shape[:2]
 
         scale = torch.Tensor([img.shape[1], img.shape[0], img.shape[1], img.shape[0]])
@@ -124,15 +137,16 @@ class RetinaFaceDetection(object):
         tmp = [landms[idx] for idx in sorted_idx]
         landms = np.asarray(tmp)
         '''
-        
+
         landms = landms.reshape((-1, 5, 2))
         landms = landms.transpose((0, 2, 1))
         landms = landms.reshape(-1, 10, )
-        return dets/ss, landms/ss
+        return dets / ss, landms / ss
 
-    def detect_tensor(self, img, resize=1, confidence_threshold=0.9, nms_threshold=0.4, top_k=5000, keep_top_k=750, save_image=False):
+    def detect_tensor(self, img, resize=1, confidence_threshold=0.9, nms_threshold=0.4, top_k=5000, keep_top_k=750,
+                      save_image=False):
         im_height, im_width = img.shape[-2:]
-        ss = 1000/max(im_height, im_width)
+        ss = 1000 / max(im_height, im_width)
         img = F.interpolate(img, scale_factor=ss)
         im_height, im_width = img.shape[-2:]
         scale = torch.Tensor([im_width, im_height, im_width, im_height]).to(self.device)
@@ -186,8 +200,8 @@ class RetinaFaceDetection(object):
         tmp = [landms[idx] for idx in sorted_idx]
         landms = np.asarray(tmp)
         '''
-        
+
         landms = landms.reshape((-1, 5, 2))
         landms = landms.transpose((0, 2, 1))
         landms = landms.reshape(-1, 10, )
-        return dets/ss, landms/ss
+        return dets / ss, landms / ss
