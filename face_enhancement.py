@@ -12,16 +12,30 @@ from align_faces import warp_and_crop_face, get_reference_facial_points
 
 
 class FaceEnhancement(object):
-    def __init__(self, args, base_dir='./', in_size=512, out_size=None, model=None, use_sr=True, device='cuda'):
-        # ----- init models -----
-        self.face_detector = RetinaFaceDetection(base_dir, device)
-        self.face_gan = FaceGAN(base_dir, in_size, out_size, model, args.channel_multiplier, args.narrow, args.key,
-                                device=device)
-        self.bgsr_model = RealESRNet(base_dir, args.sr_model, args.sr_scale, args.tile_size, device=device)
-        self.face_parser = FaceParse(base_dir, device=device)
-        # -----------------------
+    """
 
-        self.use_sr = use_sr  # use background super-resolution
+    """
+    def __init__(self, args, base_dir='./', in_size=512, out_size=None, model=None, use_sr=True, device='cuda'):
+        """
+
+        Args:
+            args: args for face detection, face parsing, face enhancement
+            base_dir: current dir
+            in_size: args.in_size, size of cropped face
+            out_size: None
+            model: args.model
+            use_sr: args.use_sr
+            device: cuda
+        """
+        # ----- init all models -----
+        self.face_detector = RetinaFaceDetection(base_dir, device, network='RetinaFace-R50')
+        self.face_gan = FaceGAN(base_dir, in_size, out_size, model, args.channel_multiplier,
+                                args.narrow, args.key, device=device)
+        self.bgsr_model = RealESRNet(base_dir, args.sr_model, args.sr_scale, args.tile_size, device=device)
+        self.face_parser = FaceParse(base_dir, model='ParseNet-latest', device=device)
+        # ---------------------------
+
+        self.use_sr = use_sr  # use background super-resolution or not
         self.in_size = in_size  # input size of face enhancement model
         self.out_size = in_size if out_size is None else out_size  # output size of face enhancement model
         self.threshold = 0.9  # threshold of face detection
