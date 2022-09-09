@@ -1,7 +1,7 @@
-'''
+"""
 @paper: GAN Prior Embedded Network for Blind Face Restoration in the Wild (CVPR2021)
 @author: yangxy (yangtao9009@gmail.com)
-'''
+"""
 import os
 import cv2
 import torch
@@ -12,6 +12,7 @@ import torch.nn.functional as F
 
 class FaceParse(object):
     def __init__(self, base_dir='./', model='ParseNet-latest', device='cuda'):
+        self.faceparse = None
         self.mfile = os.path.join(base_dir, 'weights', model + '.pth')
         self.size = 512
         self.device = device

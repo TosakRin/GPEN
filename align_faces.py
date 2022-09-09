@@ -10,6 +10,14 @@ import cv2
 import numpy as np
 from skimage import transform as trans
 
+"""
+how to make a face alignment:
+首先假设我们最后要截取一张（112，96）大小的正脸，那么人脸的五个关键点分别在什么位置才算是正脸呢？
+所以我们需要五个参考点 REFERENCE_FACIAL_POINTS
+有了参考点之后, 根据之前获得的 5 个关键点, 我们就可以计算出一个仿射变换矩阵, 用这个矩阵就可以将人脸进行仿射变换, 
+将 landmark 仿射变换到参考点上, 使得人脸变成正脸
+"""
+
 # reference facial points, a list of coordinates (x,y)
 REFERENCE_FACIAL_POINTS = [
     [30.29459953, 51.69630051],
@@ -103,6 +111,17 @@ def get_reference_facial_points(output_size=None,
                                 inner_padding_factor=0.0,
                                 outer_padding=(0, 0),
                                 default_square=False):
+    """
+    Get reference 5 facial landmarks position in the crop box.
+    Args:
+        output_size:
+        inner_padding_factor:
+        outer_padding:
+        default_square:
+
+    Returns:
+
+    """
     tmp_5pts = np.array(REFERENCE_FACIAL_POINTS)
     tmp_crop_size = np.array(DEFAULT_CROP_SIZE)
 
@@ -211,7 +230,20 @@ def warp_and_crop_face(src_img,
                        facial_pts,
                        reference_pts=None,
                        crop_size=(96, 112),
-                       align_type='smilarity'): #smilarity cv2_affine affine
+                       align_type='smilarity'):  # similarity cv2_affine affine
+    """
+    warp is for face alignment, crop is for face cropping
+
+    Args:
+        src_img:
+        facial_pts:
+        reference_pts: reference 5 facial points: used for similarity transform
+        crop_size:
+        align_type:
+
+    Returns:
+
+    """
     if reference_pts is None:
         if crop_size[0] == 96 and crop_size[1] == 112:
             reference_pts = REFERENCE_FACIAL_POINTS
@@ -220,17 +252,17 @@ def warp_and_crop_face(src_img,
             inner_padding_factor = 0
             outer_padding = (0, 0)
             output_size = crop_size
-
             reference_pts = get_reference_facial_points(output_size,
                                                         inner_padding_factor,
                                                         outer_padding,
                                                         default_square)
 
+    # ----- check if reference point and facial points(shape, count) are valid -----
     ref_pts = np.float32(reference_pts)
-    ref_pts_shp = ref_pts.shape
+    ref_pts_shp = ref_pts.shape  # (5, 2)
     if max(ref_pts_shp) < 3 or min(ref_pts_shp) != 2:
         raise FaceWarpException(
-            'reference_pts.shape must be (K,2) or (2,K) and K>2')
+            'reference_pts.shape must be (K,2) or (2,K) and K>2')  # at least 3 points
 
     if ref_pts_shp[0] == 2:
         ref_pts = ref_pts.T
@@ -247,7 +279,10 @@ def warp_and_crop_face(src_img,
     if src_pts.shape != ref_pts.shape:
         raise FaceWarpException(
             'facial_pts and reference_pts must have the same shape')
+    # reference point and facial point shape: (K, 2)
+    # ----- end check -----
 
+    # ----- warp -----
     if align_type is 'cv2_affine':
         tfm = cv2.getAffineTransform(src_pts[0:3], ref_pts[0:3])
         tfm_inv = cv2.getAffineTransform(ref_pts[0:3], src_pts[0:3])
@@ -258,9 +293,11 @@ def warp_and_crop_face(src_img,
         params, scale = _umeyama(src_pts, ref_pts)
         tfm = params[:2, :]
 
-        params, _ = _umeyama(ref_pts, src_pts, False, scale=1.0/scale)
+        params, _ = _umeyama(ref_pts, src_pts, False, scale=1.0 / scale)
         tfm_inv = params[:2, :]
+    # tfm(2,3) is the transform matrix for cv2.warpAffine
 
+    # warpAffine:
     face_img = cv2.warpAffine(src_img, tfm, (crop_size[0], crop_size[1]), flags=3)
 
     return face_img, tfm_inv
