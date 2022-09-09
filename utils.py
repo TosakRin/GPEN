@@ -13,6 +13,8 @@ import argparse
 
 def get_args():
     """Get arguments from command line"""
+    # model = {'name':'GPEN-BFR-512', 'size':512, 'channel_multiplier':2, 'narrow':1}
+    # model = {'name':'GPEN-BFR-256', 'size':256, 'channel_multiplier':1, 'narrow':0.5}
     parser = argparse.ArgumentParser()
     parser.add_argument('--aligned', action='store_true',
                         help='input are aligned faces or not')
