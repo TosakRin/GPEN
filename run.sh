@@ -6,10 +6,10 @@ python3 demo.py \
 --channel_multiplier 2 \
 --ext .png \
 --in_size 512 \
---indir examples/selfie \
+--indir input/ \
 --model GPEN-BFR-512 \
 --narrow 1 \
---outdir examples/outs-selfie \
+--outdir output/ \
 --save_face \
 --sr_model realesrnet \
 --sr_scale 4 \

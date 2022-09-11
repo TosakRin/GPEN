@@ -2,18 +2,21 @@
 @paper: GAN Prior Embedded Network for Blind Face Restoration in the Wild (CVPR2021)
 @author: yangxy (yangtao9009@gmail.com)
 """
+
+# import PythonPATH, don't remove this
+import __init_paths
 import os
 import cv2
 import glob
 import numpy as np
 from face_enhancement import FaceEnhancement
 from segmentation2face import Segmentation2Face
-from utils import get_args
+from arguments import get_args
 
 """
 hyper-parameters:
     face_enhancement:
-        --threshold: 
+        --threshold:
     detector:
         --confidence_threshold: confidence threshold of face detection
         --nms_threshold: nms threshold of face detection
