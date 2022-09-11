@@ -64,7 +64,7 @@ class FaceEnhancement(object):
         post-process the mask:
 
         Args:
-            mask:
+            mask: mask of face
             thres:
 
         Returns:

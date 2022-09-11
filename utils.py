@@ -20,23 +20,23 @@ def get_args():
                         help='input are aligned faces or not')
     parser.add_argument('--alpha', type=float, default=1,
                         help='blending the results')
-    parser.add_argument('--channel_multiplier', type=int, default=2,
+    parser.add_argument('--channel_multiplier', type=int, default=2,    # fixme:
                         help='channel multiplier of GPEN')
     parser.add_argument('--ext', type=str, default='.jpg',
                         help='extension of output')
-    parser.add_argument('--indir', type=str, default='examples/imgs',
-                        help='input folder')
     parser.add_argument('--in_size', type=int, default=512,
                         help='in resolution of GPEN')
-    parser.add_argument('--key', type=str, default=None,
+    parser.add_argument('--indir', type=str, default='examples/imgs',
+                        help='input folder')
+    parser.add_argument('--key', type=str, default=None,    # fixme: 请问这个key是什么？
                         help='key of GPEN model')
     parser.add_argument('--model', type=str, default='GPEN-BFR-512',
                         help='GPEN model')
-    parser.add_argument('--narrow', type=float, default=1,
+    parser.add_argument('--narrow', type=float, default=1,  # fixme: 请问这个narrow是什么？
                         help='channel narrow scale')
     parser.add_argument('--outdir', type=str, default='results/outs-BFR',
                         help='output folder')
-    parser.add_argument('--out_size', type=int, default=None,
+    parser.add_argument('--out_size', type=int, default=None,   # fixme: 请问这个out_size是什么？
                         help='out resolution of GPEN')
     parser.add_argument('--save_face', action='store_true',
                         help='save face or not')
@@ -46,11 +46,11 @@ def get_args():
                         help='SR scale')
     parser.add_argument('--task', type=str, default='FaceEnhancement',
                         help='task of GPEN model')
-    parser.add_argument('--tile_size', type=int, default=0,
+    parser.add_argument('--tile_size', type=int, default=0,     # fixme: tile_size是什么？
                         help='tile size for SR to avoid OOM')
-    parser.add_argument('--use_sr', action='store_true',
-                        help='use sr or not')
     parser.add_argument('--use_cuda', action='store_true',
                         help='use cuda or not')
+    parser.add_argument('--use_sr', action='store_true',
+                        help='use sr or not')
     args = parser.parse_args()
     return args
