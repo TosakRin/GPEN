@@ -1,7 +1,8 @@
 #
 weights/
 .idea/
-
+input/
+output/
 
 
 # Byte-compiled / optimized / DLL files
